@@ -20,7 +20,9 @@ COPY . .
 # ================================
 FROM ruby:3.3-alpine AS runner
 
-RUN apk add --no-cache tzdata
+RUN apk add --no-cache \
+    tzdata \
+    yaml-dev
 
 WORKDIR /app
 
