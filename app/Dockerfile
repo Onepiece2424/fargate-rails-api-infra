@@ -6,7 +6,8 @@ FROM ruby:3.3-alpine AS builder
 # ビルドに必要なパッケージをインストール
 RUN apk add --no-cache \
     build-base \
-    yaml-dev
+    yaml-dev \
+    libffi-dev
 
 WORKDIR /app
 
