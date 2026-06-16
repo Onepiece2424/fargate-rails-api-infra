@@ -226,7 +226,8 @@ resource "aws_ecs_task_definition" "main" {
 
       environment = [
         { name = "RAILS_ENV", value = "production" },
-        { name = "PORT",      value = "3000" }
+        { name = "PORT",      value = "3000" },
+        { name = "SECRET_KEY_BASE", value = "dummy_secret_for_portfolio" }
       ]
 
       # SECRET_KEY_BASE は本来 SSM Parameter Store 等で管理するが
