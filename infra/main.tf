@@ -270,3 +270,62 @@ resource "aws_ecs_service" "main" {
 
   depends_on = [aws_lb_listener.main]
 }
+
+# GitHub OIDC プロバイダー
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = ["sts.amazonaws.com"]
+
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+}
+
+# GitHub Actions 用 IAM ロール
+resource "aws_iam_role" "github_actions" {
+  name = "${var.project_name}-github-actions-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.github.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" = "repo:Onepiece2424/fargate-rails-api-infra:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# 必要な権限をアタッチ
+resource "aws_iam_role_policy" "github_actions" {
+  role = aws_iam_role.github_actions.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          # ECR
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage",
+          # ECS
+          "ecs:UpdateService",
+          "ecs:DescribeServices"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
