@@ -208,7 +208,7 @@ resource "aws_ecs_task_definition" "main" {
   family                   = "${var.project_name}-task"
   cpu                      = "512"
   memory                   = "1024"
-  network_mode             = "awsvpc"   # Fargate 必須
+  network_mode             = "awsvpc" # Fargate 必須
   requires_compatibilities = ["FARGATE"]
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
@@ -226,7 +226,7 @@ resource "aws_ecs_task_definition" "main" {
 
       environment = [
         { name = "RAILS_ENV", value = "production" },
-        { name = "PORT",      value = "3000" },
+        { name = "PORT", value = "3000" },
         { name = "SECRET_KEY_BASE", value = "dummy_secret_for_portfolio" }
       ]
 
@@ -254,7 +254,7 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = [
+    subnets = [
       aws_subnet.public_1a.id,
       aws_subnet.public_1c.id
     ]
@@ -310,21 +310,32 @@ resource "aws_iam_role_policy" "github_actions" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # ① ECR ログイン（仕様上 Resource = "*" 必須）
+      {
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+      },
+      # ② ECR へのイメージ push（対象リポジトリのみに限定）
       {
         Effect = "Allow"
         Action = [
-          # ECR
-          "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
           "ecr:CompleteLayerUpload",
-          "ecr:PutImage",
-          # ECS
+          "ecr:PutImage"
+        ]
+        Resource = aws_ecr_repository.foo.arn # ← ECRリポジトリのARNを指定
+      },
+      # ③ ECS サービスの更新（対象サービスのみに限定）
+      {
+        Effect = "Allow"
+        Action = [
           "ecs:UpdateService",
           "ecs:DescribeServices"
         ]
-        Resource = "*"
+        Resource = aws_ecs_service.main.id # ← ECSサービスのARNを指定
       }
     ]
   })
