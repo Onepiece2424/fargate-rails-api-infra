@@ -2,7 +2,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_ecr_repository" "foo" {
+resource "aws_ecr_repository" "main" {
   name                 = "rails-api"
   image_tag_mutability = "MUTABLE" // タグの上書き許可
   force_delete         = true      // リポジトリ内にイメージが残っていても削除
@@ -326,7 +326,7 @@ resource "aws_iam_role_policy" "github_actions" {
           "ecr:CompleteLayerUpload",
           "ecr:PutImage"
         ]
-        Resource = aws_ecr_repository.foo.arn # ← ECRリポジトリのARNを指定
+        Resource = aws_ecr_repository.main.arn # ← ECRリポジトリのARNを指定
       },
       # ③ ECS サービスの更新（対象サービスのみに限定）
       {
