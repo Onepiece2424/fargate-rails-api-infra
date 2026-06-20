@@ -47,6 +47,6 @@ jobs:
       - name: Wait for service stability
         run: |
           aws ecs wait services-stable \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --services ${{ vars.ECS_SERVICE }} \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --services ${{ secrets.ECS_SERVICE }} \
             --region ${{ secrets.AWS_REGION }}
