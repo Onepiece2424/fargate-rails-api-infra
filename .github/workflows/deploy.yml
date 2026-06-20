@@ -45,3 +45,10 @@ jobs:
             --service fargate-rails-api-service \
             --force-new-deployment \
             --region ${{ secrets.AWS_REGION }}
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --services ${{ vars.ECS_SERVICE }} \
+            --region ${{ secrets.AWS_REGION }}
