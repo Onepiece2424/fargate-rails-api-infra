@@ -226,13 +226,16 @@ resource "aws_ecs_task_definition" "main" {
 
       environment = [
         { name = "RAILS_ENV", value = "production" },
-        { name = "PORT", value = "3000" },
-        { name = "SECRET_KEY_BASE", value = "dummy_secret_for_portfolio" }
+        { name = "PORT", value = "3000" }
       ]
 
-      # SECRET_KEY_BASE は本来 SSM Parameter Store 等で管理するが
-      # ポートフォリオ用途のためここではダミー値を直接渡す
-      secrets = []
+      # SECRET_KEY_BASE を SSM Parameter Store で管理する
+      secrets = [
+        {
+          name      = "SECRET_KEY_BASE"
+          valueFrom = aws_ssm_parameter.secret_key_base.arn
+        }
+      ]
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -336,6 +339,26 @@ resource "aws_iam_role_policy" "github_actions" {
           "ecs:DescribeServices"
         ]
         Resource = aws_ecs_service.main.id # ← ECSサービスのARNを指定
+      }
+    ]
+  })
+}
+
+resource "aws_ssm_parameter" "secret_key_base" {
+  name  = "/${var.project_name}/secret_key_base"
+  type  = "SecureString"
+  value = "dummy_secret_for_portfolio"
+}
+
+resource "aws_iam_role_policy" "ssm_read" {
+  role = aws_iam_role.ecs_task_execution.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameters"]
+        Resource = aws_ssm_parameter.secret_key_base.arn
       }
     ]
   })
