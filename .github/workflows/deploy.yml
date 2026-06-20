@@ -1,8 +1,6 @@
 name: Deploy to ECS
 
-on:
-  pull_request:
-    types: [opened, reopened]
+on: [push]
 
 jobs:
   deploy:
@@ -44,4 +42,11 @@ jobs:
             --cluster fargate-rails-api-cluster \
             --service fargate-rails-api-service \
             --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --services ${{ secrets.ECS_SERVICE }} \
             --region ${{ secrets.AWS_REGION }}
